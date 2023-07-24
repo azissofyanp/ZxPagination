@@ -102,4 +102,3 @@ For more detailed documentation, examples, FAQs, and tutorials, visit the `docs/
 Please refer to the CHANGELOG.md file for the list of changes and new features in each version.
 
 ## Thank you for using ZxPagination! We hope it helps you handle pagination with ease. If you encounter any issues or have suggestions for improvement, feel free to open an issue or submit a pull request. Happy coding!
-```
