@@ -27,6 +27,14 @@ const pagination = new ZxPagination({
   template: (item) => `<div>${item.name}</div>`,
   limit: 10,
   mode: "dynamic",
+  onDataFetchSuccess: (data) => {
+    // Custom callback function for handling data fetch success
+    console.log("Data fetched successfully:", data);
+  },
+  onDataFetchError: (error) => {
+    // Custom callback function for handling data fetch error
+    console.error("Error fetching data:", error);
+  },
 });
 ```
 
