@@ -28,11 +28,9 @@ const pagination = new ZxPagination({
   limit: 10,
   mode: "dynamic",
   onDataFetchSuccess: (data) => {
-    // Custom callback function for handling data fetch success
     console.log("Data fetched successfully:", data);
   },
   onDataFetchError: (error) => {
-    // Custom callback function for handling data fetch error
     console.error("Error fetching data:", error);
   },
 });
@@ -52,7 +50,7 @@ pagination.reload();
 
 ## Options
 
-- `axiosConfig`: Axios configuration object for making AJAX requests to fetch data.
+- `axiosConfig`: Axios configuration object for making requests to fetch data.
 - `contentDiv`: ID of the container element where the data will be displayed.
 - `paginationDiv`: ID of the container element where the pagination buttons will be displayed.
 - `loadingHtml`: HTML content to display a loading message while fetching data.
