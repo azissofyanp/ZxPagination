@@ -1,6 +1,6 @@
 /**
  * ZxPagination.js
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Azis Sofyan Prasetyo
  * License: MIT
  * 
@@ -46,6 +46,13 @@ class ZxPagination {
     this.activePageClass = options.activePageClass || "active";
     this.pageItemClass = options.pageItemClass || "page-item";
     this.pageLinkClass = options.pageLinkClass || "page-link";
+    this.customPaginationTemplate = options.customPaginationTemplate || null;
+    this.translations = options.translations || {};
+    this.lazyLoad = options.lazyLoad || false;
+    this.initialPagesToLoad = options.initialPagesToLoad || 1;
+    this.hasMoreData = true;
+    this.localStorageKey = options.localStorageKey || "zx-pagination-state";
+    this.useLocalStorage = options.useLocalStorage !== undefined ? options.useLocalStorage : true;
   }
 
   async fetchData(pageNumber) {
@@ -54,6 +61,12 @@ class ZxPagination {
 
     try {
       this.showLoadingMessage();
+
+      if (this.lazyLoad && pageNumber > this.initialPagesToLoad) {
+        this.hasMoreData = false;
+        this.hideLoadingMessage();
+        return;
+      }
 
       let response;
       if (this.mode === "dynamic") {
@@ -71,51 +84,40 @@ class ZxPagination {
           headers: this.axiosConfig.headers || {},
         });
       } else {
-        // Static mode
         const startIndex = (pageNumber - 1) * this.limit;
         const endIndex = startIndex + this.limit;
         const data = this.dataSrc.slice(startIndex, endIndex);
-
-        const response = {
+        response = {
           data: { [this.dataKey]: data },
           recordsTotal: this.dataSrc.length,
           recordsFiltered: this.dataSrc.length,
         };
-
-        if (response.data.success) {
-          this.recordsTotal = response.data.recordsTotal;
-          this.recordsFiltered = response.data.recordsFiltered;
-          this.currentPage = pageNumber; // Update the current page here
-          this.updateContent(data);
-          this.updatePagination();
-        } else {
-          this.handleFetchError(response.data.notify);
-        }
-
       }
 
       if (response.data.success) {
         const data = response.data[this.dataKey];
         this.recordsTotal = response.data.recordsTotal;
         this.recordsFiltered = response.data.recordsFiltered;
-        this.currentPage = pageNumber; // Update the current page here
+        this.currentPage = pageNumber;
         this.updateContent(data);
         this.updatePagination();
       } else {
-        this.handleFetchError(response.data.notify);
+        this.handleFetchError(response.data.notify || "Error: Response data not successful");
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      this.handleFetchError();
+      this.handleFetchError("Error: Failed to fetch data. Please try again later.");
     } finally {
       this.isFetching = false;
       this.hideLoadingMessage();
     }
   }
 
-  handleFetchError() {
-    const errorMsg = "Error fetching data. Please try again later.";
-    this.updateContent(`<p>${errorMsg}</p>`);
+  handleFetchError(message) {
+    if (typeof this.onDataFetchError === "function") {
+      this.onDataFetchError(message);
+    }
+    this.updateContent(`<p>${message}</p>`);
   }
 
   updateContent(data, noDataHtml) {
@@ -151,14 +153,14 @@ class ZxPagination {
   updatePagination() {
     const targetPaginationContainer = document.getElementById(this.paginationDiv);
     if (!targetPaginationContainer) return;
-  
+
     const numPages = Math.ceil(this.recordsFiltered / this.limit);
     const halfButtons = Math.floor(this.paginationButtonsToShow / 2);
     let startPage = this.currentPage - halfButtons;
     startPage = Math.max(startPage, 1);
     let endPage = startPage + this.paginationButtonsToShow - 1;
     endPage = Math.min(endPage, numPages);
-  
+
     if (endPage - startPage + 1 < this.paginationButtonsToShow) {
       if (startPage === 1) {
         endPage = Math.min(this.paginationButtonsToShow, numPages);
@@ -167,54 +169,92 @@ class ZxPagination {
         startPage = Math.max(1, endPage - this.paginationButtonsToShow + 1);
       }
     }
-  
-    let paginationHtml = `<ul class="${this.paginationClass}">`;
-  
+
+    let paginationHtml = this.customPaginationTemplate || `<ul class="${this.paginationClass}">`;
+
     if (this.showPreviousNextButtons && this.currentPage > 1) {
       paginationHtml += `<li class="${this.pageItemClass}">
-        <a class="${this.pageLinkClass}" href="#" data-page="${this.currentPage - 1}" aria-label="Previous">
+        <a class="${this.pageLinkClass}" href="#" data-page="${this.currentPage - 1}" aria-label="${this.translations.prev || 'Previous'}">
           <span aria-hidden="true">&laquo;</span>
         </a>
       </li>`;
     }
-  
+
     for (let i = startPage; i <= endPage; i++) {
       paginationHtml += `<li class="${this.pageItemClass} ${this.currentPage === i ? this.activePageClass : ''}">
         ${this.currentPage === i ? `<span class="${this.pageLinkClass}">${i}</span>` : `<a class="${this.pageLinkClass}" href="#" data-page="${i}">${i}</a>`}
       </li>`;
     }
-  
+
+    if (this.lazyLoad && this.currentPage >= this.initialPagesToLoad && this.hasMoreData) {
+      paginationHtml += `<li class="${this.pageItemClass}">
+        <a class="${this.pageLinkClass}" href="#" aria-label="Load More">
+          <span aria-hidden="true">${this.translations.loadMore || 'Load More'}</span>
+        </a>
+      </li>`;
+    }
+
     if (this.showPreviousNextButtons && this.currentPage < numPages) {
       paginationHtml += `<li class="${this.pageItemClass}">
-        <a class="${this.pageLinkClass}" href="#" data-page="${this.currentPage + 1}" aria-label="Next">
+        <a class="${this.pageLinkClass}" href="#" data-page="${this.currentPage + 1}" aria-label="${this.translations.next || 'Next'}">
           <span aria-hidden="true">&raquo;</span>
         </a>
       </li>`;
     }
-  
-    paginationHtml += `</ul>`;
+
+    paginationHtml += this.customPaginationTemplate ? "" : `</ul>`;
     targetPaginationContainer.innerHTML = paginationHtml;
-  
+
     const paginationLinks = targetPaginationContainer.querySelectorAll(`.${this.pageLinkClass}`);
     paginationLinks.forEach((link) => {
-      link.addEventListener('click', (event) => {
+      link.addEventListener("click", (event) => {
         event.preventDefault();
         const pageNumber = parseInt(event.target.dataset.page, 10);
         this.currentPage = pageNumber;
         this.fetchData(this.currentPage);
       });
     });
+
+    if (this.lazyLoad && this.currentPage >= this.initialPagesToLoad && this.hasMoreData) {
+      const loadMoreButton = targetPaginationContainer.querySelector(`.${this.pageLinkClass}[aria-label="Load More"]`);
+      if (loadMoreButton) {
+        loadMoreButton.addEventListener("click", (event) => {
+          event.preventDefault();
+          this.handleLoadMoreClick();
+        });
+      }
+    }
   }
-  
+
+  handleLoadMoreClick() {
+    if (!this.isFetching && this.hasMoreData) {
+      this.currentPage++;
+      this.fetchData(this.currentPage);
+    }
+  }
+
   init() {
     const targetContentContainer = document.getElementById(this.contentDiv);
     if (!targetContentContainer) return;
 
-    this.fetchData(1);
+    if (this.useLocalStorage) {
+      const paginationState = JSON.parse(localStorage.getItem(this.localStorageKey));
+      if (paginationState) {
+        this.currentPage = paginationState.currentPage || this.currentPage;
+        this.recordsTotal = paginationState.recordsTotal || this.recordsTotal;
+        this.recordsFiltered = paginationState.recordsFiltered || this.recordsFiltered;
+      }
+    }
+
+    this.fetchData(this.currentPage);
   }
 
   async reload() {
-    this.currentPage = 1; // Reset currentPage to 1 before fetching data
+    this.currentPage = 1;
+    this.hasMoreData = true;
+    if (this.useLocalStorage) {
+      this.resetLocalStorage();
+    }
     await this.fetchData(this.currentPage);
   }
 
@@ -241,6 +281,12 @@ class ZxPagination {
       activePageClass,
       pageItemClass,
       pageLinkClass,
+      customPaginationTemplate,
+      translations,
+      lazyLoad,
+      initialPagesToLoad,
+      localStorageKey,
+      useLocalStorage,
     } = options;
 
     if (axiosConfig) this.axiosConfig = { ...this.axiosConfig, ...axiosConfig };
@@ -264,9 +310,22 @@ class ZxPagination {
     if (activePageClass) this.activePageClass = activePageClass;
     if (pageItemClass) this.pageItemClass = pageItemClass;
     if (pageLinkClass) this.pageLinkClass = pageLinkClass;
+    if (customPaginationTemplate) this.customPaginationTemplate = customPaginationTemplate;
+    if (translations) this.translations = translations;
+    if (lazyLoad !== undefined) this.lazyLoad = lazyLoad;
+    if (initialPagesToLoad !== undefined) this.initialPagesToLoad = initialPagesToLoad;
+    if (localStorageKey) this.localStorageKey = localStorageKey;
+    if (useLocalStorage !== undefined) this.useLocalStorage = useLocalStorage;
 
     if (this.initLoad || this.loadingMessageShown) {
       await this.fetchData(this.currentPage);
     }
   }
-}
+
+  resetLocalStorage() {
+    if (this.useLocalStorage) {
+      localStorage.removeItem(this.localStorageKey);
+    }
+  }
+          }
+          
