@@ -1,110 +1,118 @@
 # ZxPagination
 
-ZxPagination is a lightweight and flexible pagination library for handling pagination of data. It offers both dynamic and static pagination modes and can be easily integrated with server-side or client-side data. With ZxPagination, you can efficiently display large datasets by dividing them into pages and allowing users to navigate through the pages effortlessly.
+`ZxPagination` is a JavaScript library designed to simplify the process of creating paginated content with both client-side and server-side data fetching. It provides an easy-to-use interface for creating paginated data views in web applications.
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Initialization](#initialization)
+  - [Fetching Data](#fetching-data)
+  - [Updating Configuration](#updating-configuration)
+  - [Reloading Data](#reloading-data)
+- [Options](#options)
+- [Events](#events)
+- [Customization](#customization)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Introduction
+
+`ZxPagination` provides a flexible and customizable solution for handling paginated data views in your web applications. Whether you want to fetch data from a server or use client-side data, this library simplifies the process and offers various configuration options for tailoring the pagination experience to your needs.
 
 ## Installation
 
-To install ZxPagination, you can include the `ZxPagination.js` file in your project or use it via a package manager like npm or yarn:
+You can include `ZxPagination` in your project by including the following script tag in your HTML:
 
-```bash
-npm install zxpagination
+```html
+<script src="path-to/zx-pagination.js"></script>
 ```
+
+Replace `path-to` with the actual path to the `zx-pagination.js` file in your project.
 
 ## Usage
 
-1. Initialize the ZxPagination object with the required options:
+### Initialization
 
-```js
-const pagination = new ZxPagination({
-  axiosConfig: {
-    method: "post",
-    url: "/api/data",
-    data: { search: "" },
-  },
-  contentDiv: "content-container",
-  paginationDiv: "pagination-container",
-  loadingHtml: "<p>Loading...</p>",
-  template: (item) => `<div>${item.name}</div>`,
-  limit: 10,
-  mode: "dynamic",
-  onDataFetchSuccess: (data) => {
-    console.log("Data fetched successfully:", data);
-  },
-  onDataFetchError: (error) => {
-    console.error("Error fetching data:", error);
-  },
-});
+To create a paginated data view, you need to initialize an instance of the `ZxPagination` class. Here's how you can do it:
+
+```javascript
+const options = {
+  // Configuration options (see below)
+};
+
+const pagination = new ZxPagination(options);
 ```
 
-2. Call the `init()` method to fetch and display the first page of data:
+### Fetching Data
 
-```js
-pagination.init();
+`ZxPagination` supports both client-side and server-side data fetching. The `mode` option specifies the fetching mode. You can fetch data manually using the `fetchData` method:
+
+```javascript
+pagination.fetchData(pageNumber);
 ```
 
-3. To reload the data, use the `reload()` method:
+### Updating Configuration
 
-```js
-pagination.reload();
+You can update the configuration of an existing `ZxPagination` instance using the `updateConfig` method:
+
+```javascript
+const newOptions = {
+  // New configuration options
+};
+
+pagination.updateConfig(newOptions);
+```
+
+### Reloading Data
+
+You can reload the current page of data using the `reload` method:
+
+```javascript
+await pagination.reload();
 ```
 
 ## Options
 
-- `axiosConfig`: Axios configuration object for making requests to fetch data.
-- `contentDiv`: ID of the container element where the data will be displayed.
-- `paginationDiv`: ID of the container element where the pagination buttons will be displayed.
-- `loadingHtml`: HTML content to display a loading message while fetching data.
-- `template`: Function that generates the HTML for each item in the data.
-- `limit`: Number of items to display per page.
-- `mode`: Pagination mode (dynamic or static).
-- `dataSrc`: Array of data for static pagination mode.
-- `dataKey`: Key to access the data in the response object.
-- `noDataHtml`: HTML content to display when there is no data available.
-- `showPreviousNextButtons`: Boolean to show/hide previous and next buttons (default: true).
-- `paginationButtonsToShow`: Number of pagination buttons to display (default: 5).
-- `onDataFetchSuccess`: Callback function to handle data fetch success.
-- `onDataFetchError`: Callback function to handle data fetch error.
+Here are the available configuration options that you can pass when initializing or updating a `ZxPagination` instance:
+
+- `axiosConfig`: Configuration options for Axios (if using server-side data fetching).
+- `initLoad`: Boolean indicating whether to load data immediately.
+- `contentDiv`: ID of the container for displaying data content.
+- `paginationDiv`: ID of the container for displaying pagination controls.
+- `skeletonHtml`: HTML template for displaying loading skeleton.
+- `template`: Function that generates HTML for each data item.
+- `limit`: Number of items per page.
+- `mode`: Fetching mode (`"client"` or `"server"`).
+- `processing`: Processing mode (`"client"` or `"server"`).
+- `dataSrc`: Array of data items (if using client-side data).
+- `dataKey`: Key to access data in server response.
+- `noDataHtml`: HTML for displaying when there is no data.
+- `showPreviousNextButtons`: Boolean indicating whether to show previous/next buttons.
+- `paginationButtonsToShow`: Number of pagination buttons to show.
+- `onDataFetchSuccess`: Custom function to call on successful data fetch.
+- `onDataFetchError`: Custom function to call on data fetch error.
 - `paginationClass`: CSS class for the pagination container.
 - `activePageClass`: CSS class for the active page button.
-- `pageItemClass`: CSS class for the pagination list item.
-- `pageLinkClass`: CSS class for the pagination link.
+- `pageItemClass`: CSS class for pagination page item.
+- `pageLinkClass`: CSS class for pagination page link.
+
+## Events
+
+`ZxPagination` triggers the following events:
+
+- `onDataFetchSuccess(data)`: Triggered on successful data fetch.
+- `onDataFetchError(error)`: Triggered on data fetch error.
+
+## Customization
+
+You can customize the appearance and behavior of the pagination controls and data content by updating the CSS classes and HTML templates used in the options.
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute to ZxPagination, please follow the guidelines in the CONTRIBUTING.md file.
+Contributions are welcome! Feel free to submit issues and pull requests to help improve `ZxPagination`.
 
 ## License
 
-ZxPagination is open-source software released under the MIT License. See the LICENSE file for more details.
-
-## Versioning
-
-ZxPagination follows the Semantic Versioning scheme.
-
-## Issue Template
-
-When reporting issues, please use the issue template to provide relevant information about the problem.
-
-## Pull Request Template
-
-For pull requests, follow the guidelines in the pull request template.
-
-## Testing and CI
-
-To run tests, use the following command:
-
-```bash
-npm test
-```
-
-We also have Continuous Integration set up to ensure that tests are automatically run on every push.
-
-## Documentation
-
-For more detailed documentation, examples, FAQs, and tutorials, visit the `docs/` directory in this repository.
-
-## Release Notes
-
-Please refer to the CHANGELOG.md file for the list of changes and new features in each version.
-
-## Thank you for using ZxPagination! We hope it helps you handle pagination with ease. If you encounter any issues or have suggestions for improvement, feel free to open an issue or submit a pull request. Happy coding!
+`ZxPagination` is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
